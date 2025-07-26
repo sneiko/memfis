@@ -1,0 +1,213 @@
+package templates
+
+import "memfis/internal/models"
+import "fmt"
+
+templ Dashboard(data *models.MemoryData) {
+	@Base("Memory Leak Analysis Dashboard") {
+		<div class="container">
+			<div class="header">
+				<h1>Memory Leak Analysis</h1>
+				<p>Analysis of { data.FileName }</p>
+			</div>
+
+			<!-- Memory Overview -->
+			<div class="grid grid-3">
+				<div class="card">
+					<h2>Memory Usage</h2>
+					<div class="metric">
+						<div class="metric-value">{ models.FormatBytes(data.MemStats.TotalAlloc) }</div>
+						<div class="metric-label">Total Allocated</div>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+						<div class="metric">
+							<div class="metric-value">{ models.FormatBytes(data.MemStats.Alloc) }</div>
+							<div class="metric-label">Current</div>
+						</div>
+						<div class="metric">
+							<div class="metric-value">{ models.FormatBytes(data.MemStats.Sys) }</div>
+							<div class="metric-label">System</div>
+						</div>
+					</div>
+				</div>
+				<div class="card">
+					<h2>Heap Memory</h2>
+					<div class="chart-container">
+						<canvas id="heapChart"></canvas>
+					</div>
+				</div>
+				<div class="card">
+					<h2>Garbage Collector</h2>
+					<div class="metric">
+						<div class="metric-value">{ models.FormatNumber(uint64(data.MemStats.NumGC)) }</div>
+						<div class="metric-label">GC Cycles</div>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+						<div class="metric">
+							<div class="metric-value">{ fmt.Sprintf("%.4f%%", data.MemStats.GCCPUFraction * 100) }</div>
+							<div class="metric-label">CPU Time</div>
+						</div>
+						<div class="metric">
+							<div class="metric-value">{ models.FormatNumber(uint64(data.MemStats.NumForcedGC)) }</div>
+							<div class="metric-label">Forced GC</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Allocations Chart -->
+			<div class="card">
+				<h2>Memory Allocations</h2>
+				<div class="chart-container">
+					<canvas id="allocChart"></canvas>
+				</div>
+			</div>
+			<!-- GC Pauses Chart -->
+			if len(data.MemStats.PauseNs) > 0 {
+				<div class="card">
+					<h2>GC Pause Times (Last 50)</h2>
+					<div class="chart-container">
+						<canvas id="gcPausesChart"></canvas>
+					</div>
+				</div>
+			}
+			<!-- Stack Traces Table -->
+			<div class="card">
+				<h2>Memory Leak Stack Traces</h2>
+				<div style="overflow-x: auto;">
+					<table>
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Allocated</th>
+								<th>Count</th>
+								<th>In Use</th>
+								<th>Functions</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, trace := range data.StackTraces {
+								<tr>
+									<td>{ fmt.Sprintf("%d", trace.ID) }</td>
+									<td>{ models.FormatBytes(uint64(trace.AllocBytes)) }</td>
+									<td>{ models.FormatNumber(uint64(trace.AllocCount)) }</td>
+									<td>{ models.FormatBytes(uint64(trace.InUseBytes)) }</td>
+									<td>
+										<div class="function-list">
+											for _, fn := range trace.Functions {
+												{ fn }
+												<br/>
+											}
+										</div>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		@renderCharts(data)
+	}
+}
+
+script renderCharts(data *models.MemoryData) {
+	if(data == null) return;
+
+	const memStats = {
+				heapInuse: data.memStats.heapInuse,
+				heapIdle: data.memStats.heapIdle,
+				heapReleased:  data.memStats.heapReleased,
+				mallocs: data.memStats.mallocs,
+				frees: data.memStats.frees,
+				heapObjects: data.memStats.heapObjects,
+				pauseNs: [
+					...data.memStats.pauseNs
+				]
+			};
+
+			console.log(memStats);
+
+			// Heap Chart
+			const heapCtx = document.getElementById('heapChart');//.getContext('2d');
+			new Chart(heapCtx, {
+				type: 'doughnut',
+				data: {
+					labels: ['In Use', 'Idle', 'Released'],
+					datasets: [{
+						data: [memStats.heapInuse, memStats.heapIdle, memStats.heapReleased],
+						backgroundColor: ['#ef4444', '#3b82f6', '#10b981'],
+						borderWidth: 0
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							position: 'bottom'
+						}
+					}
+				}
+			});
+
+			// Allocations Chart
+			const allocCtx = document.getElementById('allocChart');//.getContext('2d');
+			new Chart(allocCtx, {
+				type: 'bar',
+				data: {
+					labels: ['Mallocs', 'Frees', 'Heap Objects'],
+					datasets: [{
+						data: [memStats.mallocs, memStats.frees, memStats.heapObjects],
+						backgroundColor: ['#f59e0b', '#10b981', '#8b5cf6'],
+						borderWidth: 0
+					}]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					plugins: {
+						legend: {
+							display: false
+						}
+					},
+					scales: {
+						y: {
+							beginAtZero: true
+						}
+					}
+				}
+			});
+
+			// GC Pauses Chart
+			if (memStats.pauseNs.length > 0) {
+				const gcCtx = document.getElementById('gcPausesChart');//.getContext('2d');
+				new Chart(gcCtx, {
+					type: 'line',
+					data: {
+						labels: memStats.pauseNs.map((_, i) => i + 1),
+						datasets: [{
+							label: 'Pause Time (ns)',
+							data: memStats.pauseNs,
+							borderColor: '#3b82f6',
+							backgroundColor: 'rgba(59, 130, 246, 0.1)',
+							fill: true,
+							tension: 0.4
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								display: false
+							}
+						},
+						scales: {
+							y: {
+								beginAtZero: true
+							}
+						}
+					}
+				});
+			}
+}
