@@ -1,0 +1,178 @@
+package templates
+
+templ Base(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ title }</title>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background-color: #f8fafc;
+				color: #334155;
+				line-height: 1.6;
+			}
+
+			.container {
+				margin: 0 auto;
+				padding: 2rem;
+			}
+
+			.header {
+				text-align: center;
+				margin-bottom: 3rem;
+			}
+
+			.header h1 {
+				font-size: 2.5rem;
+				font-weight: 700;
+				color: #1e293b;
+				margin-bottom: 0.5rem;
+			}
+
+			.header p {
+				font-size: 1.1rem;
+				color: #64748b;
+			}
+
+			.card {
+				background: white;
+				border-radius: 12px;
+				padding: 1.5rem;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+				margin-bottom: 1.5rem;
+			}
+
+			.card h2 {
+				font-size: 1.25rem;
+				font-weight: 600;
+				color: #1e293b;
+				margin-bottom: 1rem;
+			}
+
+			.grid {
+				display: grid;
+				gap: 1.5rem;
+			}
+
+			.grid-2 {
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+			}
+
+			.grid-3 {
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			}
+
+			.metric {
+				text-align: center;
+				padding: 1rem;
+				background: #f1f5f9;
+				border-radius: 8px;
+			}
+
+			.metric-value {
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: #1e293b;
+			}
+
+			.metric-label {
+				font-size: 0.875rem;
+				color: #64748b;
+				margin-top: 0.25rem;
+			}
+
+			.chart-container {
+				position: relative;
+				height: 300px;
+				margin-top: 1rem;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-top: 1rem;
+			}
+
+			th, td {
+				padding: 0.75rem;
+				text-align: left;
+				border-bottom: 1px solid #e2e8f0;
+			}
+
+			th {
+				background: #f8fafc;
+				font-weight: 600;
+				color: #374151;
+			}
+
+			tr:hover {
+				background: #f8fafc;
+			}
+
+			.upload-area {
+				border: 2px dashed #cbd5e1;
+				border-radius: 12px;
+				padding: 3rem;
+				text-align: center;
+				background: white;
+			}
+
+			.upload-area:hover {
+				border-color: #94a3b8;
+				background: #f8fafc;
+			}
+
+			.btn {
+				display: inline-block;
+				padding: 0.75rem 1.5rem;
+				background: #3b82f6;
+				color: white;
+				text-decoration: none;
+				border-radius: 8px;
+				border: none;
+				cursor: pointer;
+				font-size: 1rem;
+				transition: background-color 0.2s;
+			}
+
+			.btn:hover {
+				background: #2563eb;
+			}
+
+			.function-list {
+				max-height: 100px;
+				overflow-y: auto;
+				font-size: 0.875rem;
+				color: #64748b;
+			}
+
+			@media (max-width: 768px) {
+				.container {
+					padding: 1rem;
+				}
+
+				.header h1 {
+					font-size: 2rem;
+				}
+
+				.grid-2, .grid-3 {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		{ children... }
+	</body>
+	</html>
+}
