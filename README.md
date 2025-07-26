@@ -1,4 +1,4 @@
-PProf Heap Analyzer
+### PProf Heap Analyzer
 
 A lightweight tool for visualizing Go heap profile reports from saved pprof files.
 *Key Features*
